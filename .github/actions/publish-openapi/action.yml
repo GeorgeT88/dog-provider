@@ -1,0 +1,61 @@
+name: '[Action] - Publish OpenAPI'
+description: "Publishes a provider's OpenAPI contract."
+
+inputs:
+  pact_broker_base_url:
+    description: 'The base URL of the Pact Broker.'
+    required: true
+  provider_name:
+    description: 'The name of the provider pacticipant.'
+    required: true
+  provider_version:
+    description: 'The version of the provider application (e.g., commit SHA).'
+    required: true
+  branch_name:
+    description: 'The name of the source code branch.'
+    required: true
+  openapi_artifact_name:
+    description: 'Name of the artifact containing the OpenAPI specification.'
+    required: true
+  openapi_file_path:
+    description: 'Path to the OpenAPI file within the workspace after download.'
+    required: true
+  verification_artifact_name:
+    description: 'Name of the artifact containing the verification results.'
+    required: true
+  verification_file_path:
+    description: 'Path to the verification results file after download.'
+    required: true
+  pact_broker_token:
+    description: 'The authentication token for the Pact Broker.'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: 'Download OpenAPI artifact'
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.openapi_artifact_name }}
+
+    - name: 'Download verification results artifact'
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.verification_artifact_name }}
+
+    - name: 'Publish OpenAPI contract'
+      shell: bash
+      env:
+        PACT_BROKER_BASE_URL: ${{ inputs.pact_broker_base_url }}
+        PACT_BROKER_TOKEN: ${{ inputs.pact_broker_token }}
+      run: |
+        pactflow publish-provider-contract ${{ inputs.openapi_file_path }} \
+          --provider=${{ inputs.provider_name }} \
+          --provider-app-version=${{ inputs.provider_version }} \
+          --branch=${{ inputs.branch_name }} \
+          --specification=oas \
+          --content-type=application/yaml \
+          --verification-success \
+          --verifier=springdoc-openapi \
+          --verification-results=${{ inputs.verification_file_path }} \
+          --verification-results-content-type=text/plain

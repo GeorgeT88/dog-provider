@@ -1,0 +1,35 @@
+name: '[Action] - Can I deploy'
+description: 'Checks if a component version can be deployed to an environment.'
+
+inputs:
+  pact_broker_base_url:
+    description: 'The base URL of the Pact Broker.'
+    required: true
+  pacticipant:
+    description: 'The name of the component to check.'
+    required: true
+  version:
+    description: 'The version of the component to check (e.g., commit SHA).'
+    required: true
+  environment:
+    description: 'The target environment for the check (e.g., test, production).'
+    required: true
+  pact_broker_token:
+    description: 'The authentication token for the Pact Broker.'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: 'Pact Broker Can I Deploy'
+      shell: bash
+      env:
+        PACT_BROKER_BASE_URL: ${{ inputs.pact_broker_base_url }}
+        PACT_BROKER_TOKEN: ${{ inputs.pact_broker_token }}
+      run: |
+        pact-broker can-i-deploy \
+          --pacticipant ${{ inputs.pacticipant }} \
+          --version ${{ inputs.version }} \
+          --to-environment ${{ inputs.environment }} \
+          --retry-while-unknown=5 \
+          --retry-interval=15

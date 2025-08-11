@@ -1,0 +1,22 @@
+name: '[Action] - Deploy'
+description: 'Simulates a deployment for didactic purposes.'
+
+inputs:
+  pacticipant:
+    description: 'The name of the component being deployed.'
+    required: true
+  version:
+    description: 'The version of the component being deployed.'
+    required: true
+  environment:
+    description: 'The target environment for the deployment.'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: 'Simulate deployment action'
+      shell: bash
+      run: |
+        echo "✅ [Simulated] Deploying ${{ inputs.pacticipant }} version ${{ inputs.version }} to ${{ inputs.environment }}..."
+        echo "Deployment step completed successfully."

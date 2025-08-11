@@ -1,0 +1,38 @@
+name: '[Action] - Publish contract'
+description: 'Publishes pact contracts to the broker.'
+
+inputs:
+  pact_broker_base_url:
+    description: 'The base URL of the Pact Broker.'
+    required: true
+  consumer_version:
+    description: 'The version of the consumer application (e.g., commit SHA).'
+    required: true
+  branch_name:
+    description: 'The name of the source code branch where the change originates.'
+    required: true
+  artifact_name:
+    description: 'The name of the artifact containing the pact contracts to be published.'
+    required: true
+  pact_broker_token:
+    description: 'The authentication token for the Pact Broker.'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: 'Download pacts artifact'
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifact_name }}
+        path: ./pacts-to-publish
+
+    - name: 'Publish pacts to broker'
+      shell: bash
+      env:
+        PACT_BROKER_BASE_URL: ${{ inputs.pact_broker_base_url }}
+        PACT_BROKER_TOKEN: ${{ inputs.pact_broker_token }}
+      run: |
+        pact-broker publish ./pacts-to-publish \
+          --consumer-app-version=${{ inputs.consumer_version }} \
+          --branch=${{ inputs.branch_name }}

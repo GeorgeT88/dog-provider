@@ -1,0 +1,34 @@
+name: '[Support] - Verification pipeline'
+
+on:
+  repository_dispatch:
+    types: [ contract-requires-verification ]
+
+env:
+  PACT_BROKER_BASE_URL: ${{ vars.PACT_BROKER_BASE_URL }}
+  PACT_BROKER_TOKEN: ${{ secrets.PACTFLOW_TOKEN }}
+  MAVEN_CLI_OPTS: >
+    --batch-mode --errors --fail-at-end --show-version
+    -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+
+jobs:
+  verify-pacts:
+    name: Verify pacts for ${{ github.event.client_payload.provider_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout provider code at specific version
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.client_payload.provider_version }}
+
+      - name: Setup Java and Maven
+        uses: actions/setup-java@v4
+        with: { distribution: 'temurin', java-version: '21', cache: 'maven' }
+
+      - name: Run Pact Verification
+        run: >
+          mvn -f ${{ github.event.client_payload.provider_name }}/pom.xml $MAVEN_CLI_OPTS clean install
+          -Dpact.verifier.publishResults=true
+          -Dpact.provider.version=${{ github.event.client_payload.provider_version }}
+          -Dpact.provider.branch=${{ github.event.client_payload.provider_branch }}
+          -Dpactbroker.consumerversionselectors.rawjson='[{"branch":"${{ github.event.client_payload.consumer_branch }}"}]'

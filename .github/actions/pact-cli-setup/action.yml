@@ -1,0 +1,21 @@
+name: 'Setup Pact CLI'
+description: 'Downloads and installs the Pact CLI tool and caches it.'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Cache Pact CLI
+      id: cache-pact-cli
+      uses: actions/cache@v4
+      with:
+        path: ./pact
+        key: pact-cli-v1-${{ runner.os }}
+
+    - name: Install Pact CLI
+      if: steps.cache-pact-cli.outputs.cache-hit != 'true'
+      shell: bash
+      run: curl -fsSL https://raw.githubusercontent.com/pact-foundation/pact-ruby-standalone/master/install.sh | PACT_CLI_VERSION=v2.4.26 bash
+
+    - name: Add Pact to PATH
+      shell: bash
+      run: echo "$(pwd)/pact/bin" >> $GITHUB_PATH

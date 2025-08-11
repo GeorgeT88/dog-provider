@@ -1,0 +1,33 @@
+name: '[Action] - Tag deployment'
+description: 'Records (tags) a deployment in the Pact Broker.'
+
+inputs:
+  pact_broker_base_url:
+    description: 'The base URL of the Pact Broker.'
+    required: true
+  pacticipant:
+    description: 'The name of the component (pacticipant) being tagged.'
+    required: true
+  version:
+    description: 'The version of the component (e.g., commit SHA).'
+    required: true
+  environment:
+    description: 'The environment name to apply as a tag.'
+    required: true
+  pact_broker_token:
+    description: 'The authentication token for the Pact Broker.'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: 'Record deployment in Pact Broker'
+      shell: bash
+      env:
+        PACT_BROKER_BASE_URL: ${{ inputs.pact_broker_base_url }}
+        PACT_BROKER_TOKEN: ${{ inputs.pact_broker_token }}
+      run: |
+        pact-broker record-deployment \
+          --pacticipant ${{ inputs.pacticipant }} \
+          --version ${{ inputs.version }} \
+          --environment ${{ inputs.environment }}
